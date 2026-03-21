@@ -1,0 +1,46 @@
+name: "CodeQL Configuration for C++"
+
+# CodeQL C++ 分析配置
+# 
+# 分析策略说明：
+# 1. 主要分析：项目自身源代码 (include/, src/)
+# 2. 排除：third_party/ (第三方库，不在此分析)
+# 3. 依赖安全：使用 GitHub 依赖分析 (Dependabot)
+#
+# 注意：C++ 项目通常依赖第三方库，这些库的安全漏洞通过以下方式检测：
+#   - GitHub Advisory Database (依赖项漏洞)
+#   - 编译时安全检查 (如安全编译选项)
+#   - 手动定期审查第三方代码
+
+# 指定要分析的路径（项目源代码）
+paths:
+  - requests_cpp/include
+  - requests_cpp/src
+
+# 排除的路径
+paths-ignore:
+  - requests_cpp/third_party
+  - requests_cpp/tests
+  - '**/test'
+  - '**/tests'
+  - '**/third_party'
+  - '**/examples'
+
+# 查询套件 - 使用安全和质量查询
+queries:
+  - uses: security-and-quality
+
+# 额外查询过滤
+query-filters:
+  - exclude:
+      id: cpp/fixme-comment
+  - exclude:
+      id: cpp/todo-comment
+  - exclude:
+      id: cpp/multiple-comment
+  - exclude:
+      id: cpp/useless-expression
+
+# 构建模式配置
+# CodeQL 需要准确的编译信息来分析代码
+build-mode: none  # 使用 compile_commands.json 自动检测

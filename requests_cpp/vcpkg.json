@@ -1,0 +1,28 @@
+{
+  "name": "requests-cpp",
+  "version-semver": "0.1.0",
+  "description": "A modern C++ HTTP library inspired by Python's requests",
+  "homepage": "https://github.com/requests-cpp/requests-cpp",
+  "license": "Apache-2.0",
+  "supports": "!(uwp | android)",
+  "dependencies": [
+    "openssl",
+    "zlib",
+    "brotli",
+    "nghttp2"
+  ],
+  "features": {
+    "http2": {
+      "description": "Enable HTTP/2 support",
+      "dependencies": [
+        "nghttp2"
+      ]
+    },
+    "ssl": {
+      "description": "Enable SSL/TLS support",
+      "dependencies": [
+        "openssl"
+      ]
+    }
+  }
+}

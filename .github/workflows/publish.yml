@@ -1,95 +1,73 @@
-name: Publish to PyPI
+name: Build Release Artifacts
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
-    inputs:
-      test-pypi-only:
-        description: "Publish to Test PyPI only"
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "Build dists"
-    runs-on: "ubuntu-latest"
-    outputs:
-      artifact-id: ${{ steps.upload-artifact.outputs.artifact-id }}
+    name: Build artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        build_type: [Release]
 
     steps:
-      - name: "Checkout repository"
-        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6.0.2
-        with:
-          persist-credentials: false
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: "Setup Python"
-        uses: "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405" # v6.2.0
-        with:
-          python-version: "3.x"
+      - name: Configure
+        run: cmake -S requests_cpp -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-      - name: "Install dependencies"
-        run: python -m pip install build==1.4.0
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
 
-      - name: "Build dists"
+      - name: Prepare artifacts (Unix)
+        if: runner.os != 'Windows'
         run: |
-          SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) \
-          python -m build
+          mkdir -p artifacts/lib
+          mkdir -p artifacts/include
+          # 复制库文件 - 使用更全面的模式匹配
+          find build \( -name '*.a' -o -name '*.so' -o -name '*.so.*' -o -name '*.dylib' \) -exec cp {} artifacts/lib/ \; 2>/dev/null || true
+          # 复制头文件
+          cp -r requests_cpp/include/requests_cpp artifacts/include/ 2>/dev/null || true
+          # 创建版本信息
+          echo "Build: ${{ matrix.os }}-${{ matrix.build_type }}" > artifacts/build_info.txt
+          echo "Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> artifacts/build_info.txt
+          echo "Commit: ${{ github.sha }}" >> artifacts/build_info.txt
+          # 列出复制的文件
+          echo "Library files copied:"
+          ls -la artifacts/lib/ || true
 
-      - name: "Upload dists"
-        uses: "actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f"
-        id: upload-artifact
+      - name: Prepare artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts/lib
+          New-Item -ItemType Directory -Force -Path artifacts/include
+          # 复制库文件 - 包含 .lib, .dll, .pdb, .exp
+          Get-ChildItem -Path build -Recurse -Include '*.lib','*.dll','*.pdb','*.exp' | ForEach-Object { Copy-Item $_.FullName artifacts/lib/ }
+          # 复制头文件
+          Copy-Item -Path requests_cpp/include/requests_cpp -Destination artifacts/include/ -Recurse -Force
+          # 创建版本信息
+          "Build: ${{ matrix.os }}-${{ matrix.build_type }}" | Out-File -FilePath artifacts/build_info.txt
+          "Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')" | Out-File -FilePath artifacts/build_info.txt -Append
+          "Commit: ${{ github.sha }}" | Out-File -FilePath artifacts/build_info.txt -Append
+          # 列出复制的文件
+          Write-Host "Library files copied:"
+          Get-ChildItem artifacts/lib | Format-Table Name, Length
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
-          name: "dist"
-          path: "dist/"
+          name: requests_cpp-${{ matrix.os }}-${{ matrix.build_type }}
+          path: artifacts/
           if-no-files-found: error
           retention-days: 5
-
-  publish:
-    name: "Publish"
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: ["build"]
-    permissions:
-      id-token: write
-    runs-on: "ubuntu-latest"
-    environment:
-      name: "publish"
-
-    steps:
-    - name: "Download dists"
-      uses: "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3" # v8.0.0
-      with:
-        artifact-ids: ${{ needs.build.outputs.artifact-id }}
-        path: "dist/"
-
-    - name: "Publish dists to PyPI"
-      uses: "pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e" # v1.13.0
-      with:
-        attestations: true
-
-  publish-test-pypi:
-    name: "Publish to Test PyPI"
-    if: github.event_name == 'workflow_dispatch'
-    needs: ["build"]
-    permissions:
-      id-token: write
-    runs-on: "ubuntu-latest"
-    environment:
-      name: "testpypi"
-
-    steps:
-    - name: "Download dists"
-      uses: "actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3" # v8.0.0
-      with:
-        artifact-ids: ${{ needs.build.outputs.artifact-id }}
-        path: "dist/"
-
-    - name: "Publish dists to Test PyPI"
-      uses: "pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e" # v1.13.0
-      with:
-        repository-url: https://test.pypi.org/legacy/
-        attestations: true
