@@ -8,6 +8,17 @@ endif()
 
 include(GNUInstallDirs)
 
+# nghttp2 在子模块源码中只提供 nghttp2ver.h.in，
+# CI（尤其是 Windows）直接编译时会缺少 nghttp2ver.h。
+# 这里在配置阶段生成一个可用头文件，避免依赖上游构建系统先生成。
+set(PACKAGE_VERSION "1.68.90")
+set(PACKAGE_VERSION_NUM "0x01445a")
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/nghttp2/lib/includes/nghttp2/nghttp2ver.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/nghttp2/nghttp2ver.h
+    @ONLY
+)
+
 option(REQUESTS_CPP_BUILD_EXAMPLES "Build example programs" ON)
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
@@ -153,7 +164,6 @@ if(BUILD_SHARED_LIBS)
         PRIVATE
             REQUESTS_CPP_EXPORTS
             BUILDING_NGHTTP2
-            HAVE_CONFIG_H
     )
 else()
     add_library(requests_cpp STATIC ${REQUESTS_CPP_SOURCES})
@@ -168,13 +178,13 @@ else()
             REQUESTS_CPP_STATIC_DEFINE
         PRIVATE
             BUILDING_NGHTTP2
-            HAVE_CONFIG_H
     )
 endif()
 
 target_include_directories(requests_cpp
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include>
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include/ssl>
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include/net>
@@ -198,11 +208,11 @@ target_include_directories(requests_cpp
 target_compile_definitions(requests_cpp
     PRIVATE
         BUILDING_NGHTTP2
-        HAVE_CONFIG_H
 )
 
 if (WIN32)
     target_link_libraries(requests_cpp PRIVATE ws2_32)
+    target_compile_options(requests_cpp PRIVATE /FI"${CMAKE_CURRENT_SOURCE_DIR}/build_support/nghttp2_win_compat.h")
 endif()
 
 install(TARGETS requests_cpp
