@@ -1,0 +1,3 @@
+[submodule "requests_cpp/third_party/nghttp2"]
+	path = requests_cpp/third_party/nghttp2
+	url = https://github.com/nghttp2/nghttp2

@@ -23,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          submodules: recursive
 
       - name: Install clang-tidy
         run: |
@@ -48,6 +50,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          submodules: recursive
 
       - name: Install cppcheck
         run: |
@@ -85,6 +89,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          submodules: recursive
 
       - name: Install clang-format
         run: |
