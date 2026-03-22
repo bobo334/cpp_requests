@@ -3,6 +3,7 @@
 #pragma once
 
 #include "oid.h"
+#include <stddef.h>
 
 typedef unsigned char  u8;
 typedef unsigned char* pu8;

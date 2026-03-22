@@ -30,7 +30,7 @@ typedef struct CDAT  CDAT;
 
 typedef void (*fInit)(CTX* pCtx, const CDAT* pData);
 typedef void (*fInput)(CTX* pCtx, const uchar* pData, uint nSize);
-typedef void (*fDigest)(CTX* pCtx, uchar pDigest[]);
+typedef void (*fDigest)(const CTX* pCtx, uchar pDigest[]);
 typedef void (*fHash)(const uchar* pData, uint nSize, uchar pDigest[]);
 
 typedef void (*fCode)(CTX* pCtx, uchar* pData, uint nSize);
