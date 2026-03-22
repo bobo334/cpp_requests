@@ -81,7 +81,7 @@
 #define DSIZE   SHA256_SIZE
 
 #include "sha256.h"
-#include "endian.h"
+#include "../endian.h"
 
 
 /* this Microsft VC++ intrinsic rotate makes a big difference to the speed of this code */

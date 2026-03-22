@@ -78,7 +78,7 @@
 #define DSIZE   SHA1_SIZE
 
 #include "sha1.h"
-#include "endian.h"
+#include "../endian.h"
 
 
 // SHA1 initial values

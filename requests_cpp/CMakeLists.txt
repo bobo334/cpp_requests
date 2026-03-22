@@ -194,7 +194,6 @@ target_include_directories(requests_cpp
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include/rsa>
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include/cha>
         $<BUILD_INTERFACE:${TINYTLS_ROOT}/include/aes>
-        $<BUILD_INTERFACE:${TINYTLS_ROOT}/src>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/miniz>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/brotli>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/brotli/common>

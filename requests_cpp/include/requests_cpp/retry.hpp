@@ -3,6 +3,7 @@
 #include <functional>
 #include <chrono>
 #include <vector>
+#include <string>
 
 namespace requests_cpp {
 
